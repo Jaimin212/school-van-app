@@ -781,6 +781,13 @@ export default function App() {
     'Rohan Mehta,SCH-001,Class 6,A,ureshbhai Mehta,9825900111,Bopal Ahmedabad,1600\nKavya Joshi,SCH-002,KG,B,Nileshbhai Joshi,9825900222,Satellite Ahmedabad,1500'
   );
 
+  // Reset to 0 (Clear Demo Data) & Add School States
+  const [showResetModal, setShowResetModal] = useState<boolean>(false);
+  const [newSchName, setNewSchName] = useState<string>('');
+  const [newSchAddress, setNewSchAddress] = useState<string>('');
+  const [newSchContact, setNewSchContact] = useState<string>('');
+  const [newSchPhone, setNewSchPhone] = useState<string>('');
+
   // Supabase Setup Modal
   const [showSupabaseModal, setShowSupabaseModal] = useState<boolean>(false);
   const [sbUrl, setSbUrl] = useState<string>('');
@@ -1053,7 +1060,7 @@ export default function App() {
     const totalOverdue = totalOutstanding;
     const totalAdvanceCredit = students.reduce((acc, s) => acc + s.advanceCredit, 0);
     const pendingDriverCash = payments
-      .filter((p) => p.verificationStatus === 'PENDING_VERIFICATION' && !p.is_reversed)
+      .filter((p) => p.verificationStatus === 'PENDING_VERIFICATION')
       .reduce((acc, p) => acc + p.amount, 0);
     const totalDriverSalaryPayable = salaryCalculations.driverStatements.reduce(
       (acc, d) => acc + d.remainingPayable,
@@ -1566,6 +1573,15 @@ export default function App() {
                 Evening Driver (No Fees)
               </button>
             </div>
+
+            <button
+              onClick={() => setShowResetModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow transition"
+              title="Clear demo data and start from 0"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Start Fresh (0)</span>
+            </button>
 
             <button
               onClick={() => setShowSupabaseModal(true)}
@@ -4116,8 +4132,75 @@ export default function App() {
                 Schools & Central Class Timing Overrides
               </h2>
               <p className="text-xs text-slate-600 mt-0.5">
-                Edit KG or Class 1–12 timings below—all students in that school automatically inherit the updated schedule without manual student edits!
+                Add your real schools below and edit KG or Class 1–12 timings—all students in that school automatically inherit the updated schedule!
               </p>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!newSchName.trim()) {
+                    notify('Please enter School Name.', 'error');
+                    return;
+                  }
+                  const createdSch: School = {
+                    id: `sch-${Date.now()}`,
+                    code: `SCH-00${schools.length + 1}`,
+                    name: newSchName.trim(),
+                    address: newSchAddress.trim() || 'Ahmedabad',
+                    contactPerson: newSchContact.trim() || 'Principal / Admin',
+                    contactNumber: newSchPhone.trim() || '9800000000',
+                    status: 'ACTIVE',
+                    kgArrival: '08:30 AM',
+                    kgDeparture: '12:30 PM',
+                    stdArrival: '07:30 AM',
+                    stdDeparture: '01:45 PM',
+                    timingEffectiveDate: '2026-11-13'
+                  };
+                  setSchools((prev) => [...prev, createdSch]);
+                  setNewSchName('');
+                  setNewSchAddress('');
+                  setNewSchContact('');
+                  setNewSchPhone('');
+                  logAudit('SCHOOL_ADDED', 'Schools', `Added school ${createdSch.name} (${createdSch.code})`);
+                  notify(`Added school ${createdSch.name} (${createdSch.code})!`, 'success');
+                }}
+                className="grid grid-cols-1 sm:grid-cols-5 gap-2 mt-4 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs"
+              >
+                <input
+                  type="text"
+                  value={newSchName}
+                  onChange={(e) => setNewSchName(e.target.value)}
+                  placeholder="New School Name"
+                  className="px-2.5 py-1.5 border rounded-lg bg-white font-semibold"
+                />
+                <input
+                  type="text"
+                  value={newSchAddress}
+                  onChange={(e) => setNewSchAddress(e.target.value)}
+                  placeholder="Area / Address"
+                  className="px-2.5 py-1.5 border rounded-lg bg-white"
+                />
+                <input
+                  type="text"
+                  value={newSchContact}
+                  onChange={(e) => setNewSchContact(e.target.value)}
+                  placeholder="Contact Person"
+                  className="px-2.5 py-1.5 border rounded-lg bg-white"
+                />
+                <input
+                  type="text"
+                  value={newSchPhone}
+                  onChange={(e) => setNewSchPhone(e.target.value)}
+                  placeholder="Contact Mobile"
+                  className="px-2.5 py-1.5 border rounded-lg bg-white"
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-bold hover:bg-indigo-500"
+                >
+                  + Add School
+                </button>
+              </form>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                 {schools.map((sch) => (
@@ -5101,6 +5184,67 @@ export default function App() {
                 className="px-3 py-1.5 rounded-lg bg-amber-600 text-white font-bold"
               >
                 Confirm Admin Override
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================================
+          MODAL 4G: START FRESH FROM ZERO (CLEAR DEMO DATA) OR RESTORE DEMO
+      ==================================================================== */}
+      {showResetModal && (
+        <div className="fixed inset-0 bg-slate-950/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 text-xs">
+            <div className="flex items-center justify-between border-b pb-2">
+              <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                <RotateCcw className="w-4 h-4 text-rose-600" />
+                Start Fresh from 0 (Clear Demo Data)
+              </h3>
+              <button onClick={() => setShowResetModal(false)} className="p-1 rounded bg-slate-100">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-slate-600">
+              इससे अभी मौजूद सारा डेमो डेटा (Demo Schools, Students, Vans, Drivers, Invoices, Receipts, Attendance) साफ हो जाएगा और आपका सिस्टम बिल्कुल <strong>0 से</strong> आपके असली बिज़नेस डेटा के लिए खाली हो जाएगा।
+            </p>
+            <div className="space-y-2">
+              <button
+                onClick={() => {
+                  setSchools([]);
+                  setDrivers([]);
+                  setVehicles([]);
+                  setStudents([]);
+                  setInvoices([]);
+                  setPayments([]);
+                  setAttendance([]);
+                  setAllocationHistory([]);
+                  setDriverVanHistory([]);
+                  setSalaryApprovals({});
+                  setSelectedStudentId(null);
+                  setShowResetModal(false);
+                  logAudit('SYSTEM_RESET_TO_ZERO', 'System', 'Cleared all demo records to start fresh from 0');
+                  notify('All demo data cleared! Now add your real Schools, Drivers, Vans & Students from 0.', 'success');
+                }}
+                className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold"
+              >
+                Clear All Demo Data (Start from 0)
+              </button>
+              <button
+                onClick={() => {
+                  setSchools(INITIAL_SCHOOLS);
+                  setDrivers(INITIAL_DRIVERS);
+                  setVehicles(INITIAL_VEHICLES);
+                  setStudents(INITIAL_STUDENTS);
+                  setInvoices(INITIAL_INVOICES);
+                  setPayments(INITIAL_PAYMENTS);
+                  setAttendance(INITIAL_ATTENDANCE);
+                  setShowResetModal(false);
+                  notify('Demo sample data restored for testing.', 'success');
+                }}
+                className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold"
+              >
+                Restore Demo Sample Data
               </button>
             </div>
           </div>
