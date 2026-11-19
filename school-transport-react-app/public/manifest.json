@@ -1,9 +1,0 @@
-{
-  "name": "School Transport Management System",
-  "short_name": "SchoolVan",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
-  "description": "Multi-school transport allocation, fees, attendance & 50/50 driver salary system"
-}
